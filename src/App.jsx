@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Wallet, Shield, Zap, Users, Lock, Key, Layers, Sparkles } from 'lucide-react';
 
 const Presentation = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [jumpValue, setJumpValue] = useState('1');
+
+  useEffect(() => {
+    setJumpValue((currentSlide + 1).toString());
+  }, [currentSlide]);
 
   const slides = [
     {
@@ -379,6 +385,67 @@ const Presentation = () => {
       )
     },
     {
+      title: "EOA vs. EIP-4337 交易时序对比",
+      content: (
+        <div className="space-y-6 p-8 h-full flex flex-col">
+          <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <span className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-sm font-mono">EOA</span>
+                传统交易流程
+              </h3>
+              <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 space-y-3">
+                <p className="flex items-center gap-2 text-gray-700">
+                  <span className="text-blue-500 font-bold">●</span> 单层验证：签名校验即执行
+                </p>
+                <p className="flex items-center gap-2 text-gray-700">
+                  <span className="text-blue-500 font-bold">●</span> 紧耦合：账户与密钥绑定
+                </p>
+                <p className="flex items-center gap-2 text-gray-700">
+                  <span className="text-blue-500 font-bold">●</span> 一笔交易 = 一个原子指令
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-blue-600 flex items-center gap-2">
+                <span className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-mono">AA</span>
+                EIP-4337 交易流程
+              </h3>
+              <div className="bg-blue-50 p-5 rounded-xl border border-blue-100 space-y-3">
+                <p className="flex items-center gap-2 text-gray-700">
+                  <span className="text-blue-500 font-bold">●</span> 双层分离：验证逻辑与执行逻辑解耦
+                </p>
+                <p className="flex items-center gap-2 text-gray-700">
+                  <span className="text-blue-500 font-bold">●</span> 意图导向：UserOp 表达“愿景”
+                </p>
+                <p className="flex items-center gap-2 text-gray-700">
+                  <span className="text-blue-500 font-bold">●</span> 灵活验证：支持多签、OAuth、指纹等
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 relative group cursor-pointer mt-4" onClick={() => setFullscreenImage('images/eoa_4337_transactions.png')}>
+            <div className="absolute inset-0 bg-blue-600/0 group-hover:bg-blue-600/5 transition-colors rounded-2xl flex items-center justify-center z-10">
+              <div className="bg-white/90 px-6 py-3 rounded-full shadow-xl text-blue-600 font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                点击全屏查看高清大图
+              </div>
+            </div>
+            <img
+              src="images/eoa_4337_transactions.png"
+              alt="EOA vs EIP-4337 Transaction Flow"
+              className="w-full h-full object-contain rounded-2xl border border-gray-100 shadow-sm transition-transform duration-500 group-hover:scale-[1.01]"
+            />
+          </div>
+
+          <div className="text-center text-gray-500 text-sm italic">
+            * 账户抽象的核心在于将“谁签署了交易”与“如何执行资产操作”彻底解耦
+          </div>
+        </div>
+      )
+    },
+    {
       title: "智能合约钱包的优势",
       content: (
         <div className="space-y-6 p-8">
@@ -560,6 +627,51 @@ const Presentation = () => {
           <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
             <p className="text-xl text-gray-800">
               <strong>关键特性:</strong> 授权是"一次性"的,只在当前交易有效,不会永久改变账户性质
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "EIP-7702 完整交易执行流程",
+      content: (
+        <div className="space-y-6 p-8 h-full flex flex-col">
+          <div className="grid grid-cols-3 gap-6">
+            <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 text-center">
+              <Key className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
+              <h4 className="font-bold text-indigo-700">1. 授权(Auth)</h4>
+              <p className="text-sm text-gray-600">用户签署 Authorization Payload</p>
+            </div>
+            <div className="bg-purple-50 p-4 rounded-xl border border-purple-100 text-center">
+              <Layers className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+              <h4 className="font-bold text-purple-700">2. 注入(Inject)</h4>
+              <p className="text-sm text-gray-600">EVM 将代码临时委托给 EOA</p>
+            </div>
+            <div className="bg-pink-50 p-4 rounded-xl border border-pink-100 text-center">
+              <Zap className="w-8 h-8 text-pink-500 mx-auto mb-2" />
+              <h4 className="font-bold text-pink-700">3. 执行与销毁</h4>
+              <p className="text-sm text-gray-600">执行智能逻辑后自动恢复 EOA</p>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0 relative group cursor-pointer mt-4" onClick={() => setFullscreenImage('images/eip7702_transactions.png')}>
+            <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/5 transition-colors rounded-2xl flex items-center justify-center z-10">
+              <div className="bg-white/90 px-6 py-3 rounded-full shadow-xl text-indigo-600 font-bold opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 flex items-center gap-2 border-2 border-indigo-100">
+                <Sparkles className="w-5 h-5" />
+                点击放大查看 EIP-7702 完整执行细节
+              </div>
+            </div>
+            <img
+              src="images/eip7702_transactions.png"
+              alt="EIP-7702 Execution Detail"
+              className="w-full h-full object-contain rounded-2xl border border-gray-100 shadow-sm transition-transform duration-500 group-hover:scale-[1.01]"
+            />
+          </div>
+
+          <div className="bg-indigo-900/5 p-4 rounded-xl text-sm text-gray-700 border border-indigo-100/50">
+            <p className="flex items-start gap-2">
+              <span className="text-indigo-600 font-bold">💡</span>
+              <span><strong>技术解析：</strong> EIP-7702 与 4337 的最大区别在于它<b>不需要</b>预先部署合约。由于是协议层的原生支持，EOA 地址可以直接借用现有合约的代码，极大地降低了 Web3 全民账户抽象化的门槛。</span>
             </p>
           </div>
         </div>
@@ -810,12 +922,39 @@ const Presentation = () => {
         <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
             <div className="w-2 h-8 bg-blue-500 rounded-full" />
-            <h1 className="text-xl font-bold text-gray-800 tracking-tight">
-              账户抽象钱包(AA钱包)分享
+            <h1 className="text-xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
+              <span className="text-gray-400 font-medium whitespace-nowrap">账户抽象分享</span>
+              <span className="text-gray-300">/</span>
+              <span className="text-blue-600 truncate">{slides[currentSlide].title}</span>
             </h1>
           </div>
-          <div className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-sm font-medium">
-            幻灯片 {currentSlide + 1} / {slides.length}
+          <div className="bg-white/80 backdrop-blur-md text-blue-600 px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2 border border-blue-100 shadow-sm transition-all hover:bg-white">
+            <span className="text-gray-400 font-medium">幻灯片</span>
+            <div className="relative group/input">
+              <input
+                type="number"
+                min="1"
+                max={slides.length}
+                value={jumpValue}
+                onChange={(e) => setJumpValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const page = parseInt(jumpValue);
+                    if (page >= 1 && page <= slides.length) {
+                      goToSlide(page - 1);
+                    } else {
+                      setJumpValue((currentSlide + 1).toString());
+                    }
+                  }
+                }}
+                onBlur={() => setJumpValue((currentSlide + 1).toString())}
+                className="w-12 h-7 bg-blue-50/50 border border-blue-100 text-center rounded-lg text-blue-600 font-bold focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:bg-white focus:border-blue-400 transition-all shadow-inner"
+              />
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/input:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                回车确认跳转
+              </div>
+            </div>
+            <span className="text-gray-400 font-medium">/ {slides.length}</span>
           </div>
         </div>
 
@@ -866,6 +1005,36 @@ const Presentation = () => {
       >
         <ChevronRight className="w-8 h-8" />
       </button>
+
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center overflow-y-auto p-4 md:p-12 cursor-zoom-out"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <div className="relative max-w-7xl w-full my-auto">
+            <img
+              src={fullscreenImage}
+              alt="Full Transaction Flow"
+              className="w-full h-auto rounded-lg shadow-2xl block"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              className="fixed top-8 right-8 text-white hover:text-gray-300 transition-colors bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md z-[110]"
+              onClick={(e) => {
+                e.stopPropagation();
+                setFullscreenImage(null);
+              }}
+            >
+              <div className="relative w-6 h-6">
+                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white rotate-45"></div>
+                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white -rotate-45"></div>
+              </div>
+              <span className="sr-only">关闭</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
