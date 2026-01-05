@@ -12,13 +12,14 @@ const Presentation = () => {
 
   const slides = [
     {
-      title: "账户抽象钱包(AA钱包)深度解析",
+      title: "(AA钱包)深度解析",
       subtitle: "从传统钱包到智能账户的演进之路",
       content: (
         <div className="flex flex-col items-center justify-center h-full space-y-8">
           <Wallet className="w-32 h-32 text-blue-500" />
           <div className="text-center space-y-4">
             <h1 className="text-5xl font-bold text-gray-800">账户抽象钱包</h1>
+            <p className="text-2xl text-gray-400">Account Abstraction, AA</p>
             <p className="text-2xl text-gray-600">EIP-4337 & EIP-7702 详解</p>
             <p className="text-xl text-gray-500 mt-8">让区块链钱包更智能、更安全、更易用</p>
           </div>
@@ -923,7 +924,7 @@ const Presentation = () => {
           <div className="flex items-center gap-3">
             <div className="w-2 h-8 bg-blue-500 rounded-full" />
             <h1 className="text-xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
-              <span className="text-gray-400 font-medium whitespace-nowrap">账户抽象分享</span>
+              <span className="text-gray-400 font-medium whitespace-nowrap">账户抽象钱包分享</span>
               <span className="text-gray-300">/</span>
               <span className="text-blue-600 truncate">{slides[currentSlide].title}</span>
             </h1>
