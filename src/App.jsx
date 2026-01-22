@@ -1,14 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Wallet, Shield, Zap, Users, Lock, Key, Layers, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Wallet, Shield, Zap, Users, Lock, Key, Layers, Sparkles, Maximize, Minimize } from 'lucide-react';
 
 const Presentation = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [jumpValue, setJumpValue] = useState('1');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const presentationRef = React.useRef(null);
 
   useEffect(() => {
     setJumpValue((currentSlide + 1).toString());
   }, [currentSlide]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      } else if (e.key === 'f') {
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentSlide]); // Re-bind when slides change if needed, though next/prev are stable
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      presentationRef.current?.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
 
   const slides = [
     {
@@ -915,54 +949,70 @@ const Presentation = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center py-12 px-4">
+    <div className={`min-h-screen bg-slate-100 flex flex-col items-center justify-center transition-all duration-500 ${isFullscreen ? 'p-0' : 'py-12 px-4'}`}>
       {/* Main Presentation Container */}
-      <div className="w-full max-w-5xl flex flex-col bg-white rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden">
+      <div
+        ref={presentationRef}
+        className={`w-full flex flex-col bg-white shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden transition-all duration-500 relative group ${isFullscreen ? 'h-screen max-w-none rounded-none' : 'max-w-5xl rounded-2xl'}`}
+      >
 
         {/* Header */}
-        <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-white">
+        <div className={`px-8 transition-all duration-300 flex items-center justify-between bg-white z-20 ${isFullscreen ? 'py-3 border-none' : 'py-4 border-b border-gray-100'}`}>
           <div className="flex items-center gap-3">
-            <div className="w-2 h-8 bg-blue-500 rounded-full" />
+            <div className={`w-2 h-8 bg-blue-500 rounded-full transition-all ${isFullscreen ? 'h-6' : 'h-8'}`} />
             <h1 className="text-xl font-bold text-gray-800 tracking-tight flex items-center gap-2">
               <span className="text-gray-400 font-medium whitespace-nowrap">账户抽象钱包分享</span>
               <span className="text-gray-300">/</span>
               <span className="text-blue-600 truncate">{slides[currentSlide].title}</span>
             </h1>
           </div>
-          <div className="bg-white/80 backdrop-blur-md text-blue-600 px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2 border border-blue-100 shadow-sm transition-all hover:bg-white">
-            <span className="text-gray-400 font-medium">幻灯片</span>
-            <div className="relative group/input">
-              <input
-                type="number"
-                min="1"
-                max={slides.length}
-                value={jumpValue}
-                onChange={(e) => setJumpValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const page = parseInt(jumpValue);
-                    if (page >= 1 && page <= slides.length) {
-                      goToSlide(page - 1);
-                    } else {
-                      setJumpValue((currentSlide + 1).toString());
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleFullscreen}
+              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+              title={isFullscreen ? "退出全屏" : "全屏演示"}
+            >
+              {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+            </button>
+            <div className="bg-white/80 backdrop-blur-md text-blue-600 px-4 py-1.5 rounded-full text-sm font-semibold flex items-center gap-2 border border-blue-100 shadow-sm transition-all hover:bg-white text-nowrap">
+              <span className="text-gray-400 font-medium">幻灯片</span>
+              <div className="relative group/input">
+                <input
+                  type="number"
+                  min="1"
+                  max={slides.length}
+                  value={jumpValue}
+                  onChange={(e) => setJumpValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const page = parseInt(jumpValue);
+                      if (page >= 1 && page <= slides.length) {
+                        goToSlide(page - 1);
+                      } else {
+                        setJumpValue((currentSlide + 1).toString());
+                      }
                     }
-                  }
-                }}
-                onBlur={() => setJumpValue((currentSlide + 1).toString())}
-                className="w-12 h-7 bg-blue-50/50 border border-blue-100 text-center rounded-lg text-blue-600 font-bold focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:bg-white focus:border-blue-400 transition-all shadow-inner"
-              />
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/input:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-                回车确认跳转
+                  }}
+                  onBlur={() => setJumpValue((currentSlide + 1).toString())}
+                  className="w-12 h-7 bg-blue-50/50 border border-blue-100 text-center rounded-lg text-blue-600 font-bold focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:bg-white focus:border-blue-400 transition-all shadow-inner"
+                />
+                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/input:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                  回车确认跳转
+                </div>
               </div>
+              <span className="text-gray-400 font-medium">/ {slides.length}</span>
             </div>
-            <span className="text-gray-400 font-medium">/ {slides.length}</span>
           </div>
         </div>
 
-        {/* Content Area - Flexible Height */}
-        <div className="min-h-[500px] relative">
-          <div className="p-10">
-            {slides[currentSlide].content}
+        {/* Content Area - Fixed 16:9 Aspect Ratio with Centering */}
+        <div className="relative aspect-video w-full bg-white overflow-hidden flex flex-col items-center justify-center">
+          <div className="absolute inset-0 p-10 flex flex-col justify-center items-center">
+            <div className="w-full h-full overflow-y-auto scrollbar-hide flex flex-col items-center">
+              <div className="w-full my-auto">
+                {slides[currentSlide].content}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -981,61 +1031,66 @@ const Presentation = () => {
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Keyboard Shortcuts Hint */}
-      <div className="mt-8 text-gray-400 text-sm flex items-center gap-4">
-        <span>lfhuang</span>
-        <span className="w-1 h-1 bg-gray-300 rounded-full" />
-        <span>账户抽象深度解析</span>
-      </div>
-
-      {/* Screen Edge Navigation Buttons */}
-      <button
-        onClick={prevSlide}
-        disabled={currentSlide === 0}
-        className={`fixed left-12 top-1/2 -translate-y-1/2 w-16 h-16 flex items-center justify-center rounded-full bg-white shadow-xl border border-gray-100 text-gray-800 transition-all duration-300 z-50 ${currentSlide === 0 ? 'opacity-0 cursor-default' : 'opacity-5 hover:opacity-100'}`}
-      >
-        <ChevronLeft className="w-8 h-8" />
-      </button>
-
-      <button
-        onClick={nextSlide}
-        disabled={currentSlide === slides.length - 1}
-        className={`fixed right-12 top-1/2 -translate-y-1/2 w-16 h-16 flex items-center justify-center rounded-full bg-white shadow-xl border border-gray-100 text-gray-800 transition-all duration-300 z-50 ${currentSlide === slides.length - 1 ? 'opacity-0 cursor-default' : 'opacity-5 hover:opacity-100'}`}
-      >
-        <ChevronRight className="w-8 h-8" />
-      </button>
-
-      {/* Fullscreen Image Modal */}
-      {fullscreenImage && (
-        <div
-          className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center overflow-y-auto p-4 md:p-12 cursor-zoom-out"
-          onClick={() => setFullscreenImage(null)}
-        >
-          <div className="relative max-w-7xl w-full my-auto">
-            <img
-              src={fullscreenImage}
-              alt="Full Transaction Flow"
-              className="w-full h-auto rounded-lg shadow-2xl block"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              className="fixed top-8 right-8 text-white hover:text-gray-300 transition-colors bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md z-[110]"
-              onClick={(e) => {
-                e.stopPropagation();
-                setFullscreenImage(null);
-              }}
-            >
-              <div className="relative w-6 h-6">
-                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white rotate-45"></div>
-                <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white -rotate-45"></div>
-              </div>
-              <span className="sr-only">关闭</span>
-            </button>
+        {/* Keyboard Shortcuts Hint */}
+        {!isFullscreen && (
+          <div className="mt-8 text-gray-400 text-sm flex items-center justify-center gap-4 py-4 w-full">
+            <span>lfhuang</span>
+            <span className="w-1 h-1 bg-gray-300 rounded-full" />
+            <span>账户抽象深度解析</span>
+            <span className="w-1 h-1 bg-gray-300 rounded-full" />
+            <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded border border-gray-200 bg-white">←</kbd> <kbd className="px-1.5 py-0.5 rounded border border-gray-200 bg-white">→</kbd> 切换</span>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Screen Edge Navigation Buttons */}
+        <button
+          onClick={prevSlide}
+          disabled={currentSlide === 0}
+          className={`absolute left-4 top-1/2 -translate-y-1/2 w-16 h-16 flex items-center justify-center rounded-full bg-white shadow-xl border border-gray-100 text-gray-800 transition-all duration-300 z-50 ${currentSlide === 0 ? 'opacity-0 cursor-default' : 'opacity-0 hover:opacity-100 group-hover:opacity-10'}`}
+        >
+          <ChevronLeft className="w-8 h-8" />
+        </button>
+
+        <button
+          onClick={nextSlide}
+          disabled={currentSlide === slides.length - 1}
+          className={`absolute right-4 top-1/2 -translate-y-1/2 w-16 h-16 flex items-center justify-center rounded-full bg-white shadow-xl border border-gray-100 text-gray-800 transition-all duration-300 z-50 ${currentSlide === slides.length - 1 ? 'opacity-0 cursor-default' : 'opacity-0 hover:opacity-100 group-hover:opacity-10'}`}
+        >
+          <ChevronRight className="w-8 h-8" />
+        </button>
+        {/* Fullscreen Image Modal - Moved inside the presentationRef container */}
+        {
+          fullscreenImage && (
+            <div
+              className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center overflow-y-auto p-4 md:p-12 cursor-zoom-out"
+              onClick={() => setFullscreenImage(null)}
+            >
+              <div className="relative max-w-7xl w-full my-auto">
+                <img
+                  src={fullscreenImage}
+                  alt="Full Transaction Flow"
+                  className="w-full h-auto rounded-lg shadow-2xl block"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  className="fixed top-8 right-8 text-white hover:text-gray-300 transition-colors bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md z-[110]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setFullscreenImage(null);
+                  }}
+                >
+                  <div className="relative w-6 h-6">
+                    <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white rotate-45"></div>
+                    <div className="absolute top-1/2 left-0 w-full h-0.5 bg-white -rotate-45"></div>
+                  </div>
+                  <span className="sr-only">关闭</span>
+                </button>
+              </div>
+            </div>
+          )
+        }
+      </div>
     </div>
   );
 };
